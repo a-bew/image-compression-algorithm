@@ -1,0 +1,36 @@
+{
+  "name": "image-compression-algorithm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "NODE_ENV=production node dist/src/index.js",
+    "dev": "NODE_ENV=development nodemon --exec ts-node src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://a-bew: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@github.com/a-bew/image-compression-algorithm.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/a-bew/image-compression-algorithm/issues"
+  },
+  "homepage": "https://github.com/a-bew/image-compression-algorithm#readme",
+  "dependencies": {
+    "@types/body-parser": "^1.19.2",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "knex": "^2.4.2",
+    "mysql2": "^3.1.2",
+    "nodemon": "^2.0.20",
+    "sqlite3": "^5.1.4",
+    "ts-node": "^10.9.1"
+  }
+}
