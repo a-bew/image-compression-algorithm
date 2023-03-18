@@ -26,7 +26,9 @@ const router = express.Router();
 //   res.send('Images uploaded successfully');
 // });
 
-const upload = multer({ dest: 'uploads/' });
+const projectRoot = process.cwd();
+
+const upload = multer({ dest: `${projectRoot}/uploads/` });
 
   router.post('/', upload.array('files'), async (req:any, res:any) => {
   // console.log(req.files);

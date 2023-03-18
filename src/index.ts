@@ -7,7 +7,13 @@ import uploadRouter from './routes/uploads'
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.static('src/utils/tmp'));
+let srcPath = 'src'
+
+if (process.env.NODE_ENV === 'production'){
+    srcPath = 'dist' 
+}
+
+app.use(express.static(`${srcPath}/utils/tmp`));
 
 // Body parser middleware
 app.use(bodyParser.urlencoded({ extended: false }));
