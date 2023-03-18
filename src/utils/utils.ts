@@ -30,7 +30,7 @@ export async function compressImage(inputURL: string): Promise<string> {
         // Set a timeout to delete the file after 30 minutes
         setTimeout(() => {
             deleteFile(outpath);
-        }, 1 * 60 * 1000);
+        }, 4 * 60 * 1000);
         
     } catch (error) {
       reject(error);
