@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
-const database_1 = __importDefault(require("../database"));
+const database_1 = __importDefault(require("./database"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
 // Body parser middleware
