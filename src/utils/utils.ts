@@ -2,6 +2,10 @@ import fs from "fs";
 import Jimp = require("jimp");
 import cron from 'node-cron'
 import path from 'path';
+import { PathLike } from 'fs';
+
+import { createWriteStream } from 'fs';
+import { Canvas } from "canvas";
 
 // filterImageFromURL
 // helper function to download, filter, and save the filtered image locally
@@ -17,8 +21,9 @@ export async function compressImage(inputURL: string): Promise<string> {
 
         const photo = await Jimp.read(inputURL);
       const outpath =
-          "/tmp/filtered." + Math.floor(Math.random() * 2000) + ".jpg";
+        "/tmp/filtered." + Math.floor(Math.random() * 2000) + ".jpg";
 
+        
       await photo
         .resize(256, 256) // resize
         .quality(60) // set JPEG quality
@@ -51,12 +56,12 @@ export async function deleteLocalFiles(files: Array<string>) {
 
 export function getFilename() {
     const timestamp = Date.now();
-    return `filtered.${timestamp}.jpg`;
+    return `filtered.${timestamp}.png`;
   }
 
 
 // Function to delete the file
-function deleteFile(filename: string) {
+export function deleteFile(filename: string) {
     const filepath = path.join(__dirname, filename);
     fs.unlink(filepath, (err) => {
       if (err) {
@@ -66,3 +71,67 @@ function deleteFile(filename: string) {
       }
     });
   }
+
+
+export async function saveCanvasToImage(canvas: any, filePath: string, quality: number, imageFormatParam: string) {
+
+    const fullPath = `${__dirname}/${filePath}`;
+  
+    try {
+
+      const buffer = await canvas.toBuffer(`image/${imageFormatParam}`, {quality});
+      
+      const uint8Array = new Uint8Array(buffer);
+    
+      // Write to file first
+      await fs.promises.writeFile(fullPath, uint8Array);
+    
+      // Then get a read stream
+      const readStream = fs.createReadStream(fullPath);
+    
+      const stats = fs.statSync(fullPath);
+      const size = stats.size;
+     // Set a timeout to delete the file after 30 minutes
+
+      setTimeout(() => {
+          deleteFile(filePath);
+      }, 4 * 60 * 1000);
+
+      return {
+        size,
+        compressedFile: fullPath
+      };
+    
+    } catch(error: any) {
+
+      // Handle errors here
+      console.error('Error saving canvas to image:', error);
+      throw error; // Re-throw the error for further handling or logging
+
+    }
+
+}
+
+export function getValidImageFormat(format: string): string {
+  let validFormat: string;
+
+  switch (format.toLowerCase()) {
+    case 'png':
+      validFormat = 'png';
+      break;
+    case 'jpeg':
+    case 'jpg':
+      validFormat = 'jpeg';
+      break;
+    case 'webp':
+      validFormat = 'webp';
+      break;
+    default:
+      // If the format is not recognized, return the default format (jpg)
+      validFormat = 'jpeg';
+      break;
+  }
+
+  return validFormat;
+}
+

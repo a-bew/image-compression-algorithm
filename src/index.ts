@@ -13,6 +13,8 @@ if (process.env.NODE_ENV === 'production'){
     srcPath = 'dist' 
 }
 
+console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+
 app.use(express.static(`${srcPath}/utils/tmp`));
 
 // Body parser middleware
