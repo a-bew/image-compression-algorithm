@@ -75,9 +75,16 @@ export function deleteFile(filename: string) {
 
 export async function saveCanvasToImage(canvas: any, filePath: string, quality: number, imageFormatParam: string) {
 
-    const fullPath = `${__dirname}/${filePath}`;
-  
+    const fullPath = path.join(__dirname, filePath);
+    // const fullPath = `${__dirname}/${filePath}`;
+
+    // Get the directory path without the filename
+    const directoryPath = path.dirname(fullPath);
+
     try {
+
+      // Check if the directory exists, and create it if it doesn't
+      await fs.promises.mkdir(directoryPath, { recursive: true });
 
       const buffer = await canvas.toBuffer(`image/${imageFormatParam}`, {quality});
       
