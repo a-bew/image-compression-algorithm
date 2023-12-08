@@ -77,6 +77,8 @@ async function processUploadedFiles(
   callback: (resultCanvas: HTMLCanvasElement[]) => void
 ) {
 
+  try {
+    
   if (currentIndex >= files.length) {
     // All files processed, invoke the callback
     callback(manipulatedCanvases); // Pass the manipulatedCanvases array
@@ -131,6 +133,12 @@ async function processUploadedFiles(
   
   // Continue processing the next file
   processUploadedFiles(files, currentIndex + 1, dimensionInfo, manipulatedCanvases, callback);
+
+} catch (error) {
+  console.error('Error processing uploaded files:', error);
+  // Handle the error or rethrow it if you want the route handler to catch it
+  throw error;    
+}
 
 }
 
@@ -211,10 +219,11 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
 
   } catch (error:any) {
     
-    console.log("error", error.message);
+    console.error('Error in route handling logic:', error);
     // If there's an error, delete all uploaded files and return an error response
     req.files.forEach((file:any) => fs.unlinkSync(file.path));
-    res.status(500).send('Internal server error');
+    res.status(500).json({ error: 'Internal Server Error' });
+
   }
 
 });
