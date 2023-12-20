@@ -20,10 +20,8 @@ const projectRoot = process.cwd();
 const upload = multer({ dest: `${projectRoot}/uploads/` });
 
   router.post('/', upload.array('files'), async (req:any, res:any) => {
-  // console.log(req.files);
-  // res.send('Images uploaded successfully');
-  console.log("we are here");
-  try {
+
+    try {
     const compressedFiles: {size: number, compressedFile: string}[] = [];
 
     // Loop through each uploaded file
@@ -91,8 +89,8 @@ async function processUploadedFiles(
   const image = await loadImage(file.path);
   const originalHeight = image.height;
   const originalWidth = image.width;
-  let desiredWidth = dimensionInfo.width; 
-  let desiredHeight = dimensionInfo.height;
+  let desiredWidth = dimensionInfo.width || originalWidth; 
+  let desiredHeight = dimensionInfo.height || originalHeight;
 
   // Calculate the aspect ratio of the image
   // const aspectRatio = image.width / image.height;
@@ -104,8 +102,9 @@ async function processUploadedFiles(
   // const desiredHeight = Math.round(desiredWidth / aspectRatio);
 
   if (dimensionInfo.maintainAspect) {
-    const aspectRatio = originalWidth / originalHeight;
-    desiredHeight = Math.round(desiredWidth / aspectRatio); 
+    const aspectRatio =  desiredWidth / originalWidth;
+    // const aspectRatio = (originalHeight*desiredWidth)/originalWidth; //(oldHeight * newWidth) / oldWidth
+    desiredHeight = Math.round(originalHeight * aspectRatio); 
   }
 
   // Create a canvas with the desired dimensions
@@ -146,8 +145,6 @@ const upload1 = multer({ dest: `${projectRoot}/uploads/manipulate-images` });
 
 router.post('/manipulate-images', upload1.array('files'), async (req:any, res:any) => {
 
-  console.log(req.files);
-  // res.send('Images uploaded successfully');
   try {
     
     const uploadedFiles = req.files as Express.Multer.File[];
@@ -161,20 +158,14 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
     const colorParam = req.query.color as string;
 
     const quality = qualityParam ? parseInt(qualityParam, 10) : 90;
-    // const { quality, imageFormat, aspect, width, height, color }  = req.query;
+
     const imageFormat = getValidImageFormat(imageFormatParam);
 
     const dimensionInfo: DimensionInfoProp = {
       maintainAspect: aspectParam === 'true',
       width: parseInt(widthParam),
       height: parseInt(heightParam),
-
     }
-
-    console.log('widthParam', widthParam)
-
-    // const quality = 90;
-    console.log("imageFormatParam", imageFormatParam);
 
     // An array to store manipulated canvases
     const manipulatedCanvases: HTMLCanvasElement[] = [];
@@ -190,20 +181,12 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
             const fileName = `filtered.${Math.floor(Math.random() * 2000)}.${imageFormat}`;
     
             const filePath = `/tmp/${fileName}`;
-  
-            
-            // Set a timeout to delete the file after 30 minutes
-            // setTimeout(() => {
-            //   deleteFile(filePath);
-            // }, 4 * 60 * 1000);
-        
+          
             return saveCanvasToImage(canvas, filePath, quality, imageFormat);
   
           })
         );
     
-          // console.log("savedImages", savedImages)
-        // res.json({ savedImagePaths: savedImages });
         res.status(200).json({files: savedImages });
 
 
