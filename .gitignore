@@ -1,2 +1,4 @@
 node_modules/
 uploads/manipulate-images
+.env
+src/utils/tmp

@@ -57,7 +57,7 @@ export async function deleteLocalFiles(files: Array<string>) {
 export function getFilename() {
     const timestamp = Date.now();
     return `filtered.${timestamp}.png`;
-  }
+}
 
 
 // Function to delete the file
@@ -142,3 +142,22 @@ export function getValidImageFormat(format: string): string {
   return validFormat;
 }
 
+
+export function downloadImage(res: any, fileName:string) {
+  try {
+
+             // const image = req.params.image;
+             const filePath = `/tmp/${fileName}`;
+
+             // const imagePath = `${__dirname}/tmp/${image}`;
+             const imagePath = path.join(__dirname, filePath);
+     
+             // const fullPath = path.join(__dirname, filePath);
+     
+             res.download(imagePath, fileName); 
+    
+  } catch (error:any) {
+    console.error(error);
+    throw new Error(error.message)
+  }
+}

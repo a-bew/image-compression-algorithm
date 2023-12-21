@@ -10,7 +10,7 @@ import path from 'path';
 import { createCanvas, loadImage } from 'canvas';
 import fetch from 'node-fetch';
 
-const isImageURL = require('image-url-validator').default;
+// const isImageURL = require('image-url-validator').default;
 // import isImageURL from 'image-url-validator';
 
 const router = express.Router();
@@ -113,12 +113,12 @@ async function processUploadedFiles(
   const ctx = resizedCanvas.getContext('2d');
 
   // Draw the image onto the resized canvas to resize it
-  // ctx.drawImage(image, 0, 0, desiredWidth, desiredHeight);
-    ctx.drawImage(
-      image, 
-      0, 0, originalWidth, originalHeight,
-      0, 0, desiredWidth, desiredHeight
-  );
+  ctx.drawImage(image, 0, 0, desiredWidth, desiredHeight);
+  //   ctx.drawImage(
+  //     image, 
+  //     0, 0, originalWidth, originalHeight,
+  //     0, 0, desiredWidth, desiredHeight
+  // );
 
   // Store the manipulated canvas in the array
   manipulatedCanvases.push(resizedCanvas);
@@ -189,7 +189,6 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
     
         res.status(200).json({files: savedImages });
 
-
       } catch (error:any) {
 
         console.log(error);
@@ -205,6 +204,7 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
     console.error('Error in route handling logic:', error);
     // If there's an error, delete all uploaded files and return an error response
     req.files.forEach((file:any) => fs.unlinkSync(file.path));
+
     res.status(500).json({ error: 'Internal Server Error' });
 
   }

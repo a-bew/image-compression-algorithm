@@ -1,9 +1,11 @@
+require('dotenv').config(); // Load environment variables from .env file
+
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 // import db from './database';
 import uploadRouter from './routes/uploads'
-
+import downloadRouter from "./routes/downloads";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -13,7 +15,7 @@ if (process.env.NODE_ENV === 'production'){
     srcPath = 'dist' 
 }
 
-console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+// console.log("process.env.NODE_ENV", process.env.NODE_ENV);
 
 app.use(express.static(`${srcPath}/utils/tmp`));
 
@@ -31,6 +33,7 @@ app.use(cors());
 // });
 
 app.use('/upload', uploadRouter);
+app.use('/download', downloadRouter);
 
 
 // Start the server
