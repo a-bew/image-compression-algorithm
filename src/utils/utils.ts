@@ -5,7 +5,6 @@ import path from 'path';
 import { PathLike } from 'fs';
 import { promisify } from 'util';
 import { pipeline } from 'stream';
-const webpConv = require('webp-converter');
 
 import { createReadStream, createWriteStream } from 'fs';
 import { Canvas } from "canvas";
