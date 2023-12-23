@@ -22,28 +22,29 @@ const upload = multer({ dest: `${projectRoot}/uploads/` });
   router.post('/', upload.array('files'), async (req:any, res:any) => {
 
     try {
-    const compressedFiles: {size: number, compressedFile: string}[] = [];
 
-    // Loop through each uploaded file
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
+      const compressedFiles: {size: number, compressedFile: string}[] = [];
 
-      // Compress the uploaded image
-      const compressedFile = await compressImage(file.path);
-      const stats = fs.statSync(compressedFile);
-      const fileSizeInBytes = stats.size;
-      const fileSizeInKilobytes = fileSizeInBytes;
-      //  / 1024;
-      compressedFiles.push({size: fileSizeInKilobytes, compressedFile});
+      // Loop through each uploaded file
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
 
-        // Delete the file
-      fs.unlink(file.path, err => {
-        if (err) {
-          console.error(err);
-        }
-      });
-      
-    }
+        // Compress the uploaded image
+        const compressedFile = await compressImage(file.path);
+        const stats = fs.statSync(compressedFile);
+        const fileSizeInBytes = stats.size;
+        const fileSizeInKilobytes = fileSizeInBytes;
+        //  / 1024;
+        compressedFiles.push({size: fileSizeInKilobytes, compressedFile});
+
+          // Delete the file
+        fs.unlink(file.path, err => {
+          if (err) {
+            console.error(err);
+          }
+        });
+        
+      }
 
     // All images are compressed, return a success response with the compressed file paths
     res.status(200).json({oldFiles: req.files, files: compressedFiles });
@@ -64,8 +65,26 @@ const upload = multer({ dest: `${projectRoot}/uploads/` });
 type DimensionInfoProp = {
   maintainAspect: boolean,
   width: number,
-  height: number
+  height: number,
+  colorParam: string;
+  imageFormatParam: string;
 }
+
+// Reusable function for converting image data to grayscale
+function applyGrayscale(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const pixels = imageData.data;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const avg = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+    pixels[i] = avg;
+    pixels[i + 1] = avg;
+    pixels[i + 2] = avg;
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
 // Recursive function to process uploaded files
 async function processUploadedFiles(
   files: Express.Multer.File[],
@@ -101,7 +120,7 @@ async function processUploadedFiles(
   // Calculate the corresponding height to maintain aspect ratio
   // const desiredHeight = Math.round(desiredWidth / aspectRatio);
 
-  if (dimensionInfo.maintainAspect) {
+  if (dimensionInfo.maintainAspect && desiredWidth > 0) {
     const aspectRatio =  desiredWidth / originalWidth;
     // const aspectRatio = (originalHeight*desiredWidth)/originalWidth; //(oldHeight * newWidth) / oldWidth
     desiredHeight = Math.round(originalHeight * aspectRatio); 
@@ -111,14 +130,31 @@ async function processUploadedFiles(
   const resizedCanvas:any = createCanvas(desiredWidth, desiredHeight);
 
   const ctx = resizedCanvas.getContext('2d');
+// Set high-quality image rendering for better sharpness
+    // ctx.imageSmoothingEnabled = true;
+    // ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(
+      image, 
+      0, 0, originalWidth, originalHeight,
+      // 0, 0, desiredWidth, desiredHeight
+  );
 
+    // Sharpen image
+    // ctx.filter = 'sharpen(1.5)';
+    // Set the blur effect
+    ctx.filter = 'blur(10px)'; // Adjust the blur radius as needed
   // Draw the image onto the resized canvas to resize it
-  ctx.drawImage(image, 0, 0, desiredWidth, desiredHeight);
-  //   ctx.drawImage(
-  //     image, 
-  //     0, 0, originalWidth, originalHeight,
-  //     0, 0, desiredWidth, desiredHeight
-  // );
+  // ctx.drawImage(image, 0, 0, desiredWidth, desiredHeight);
+  ctx.drawImage(
+      image, 
+      0, 0, originalWidth, originalHeight,
+      0, 0, desiredWidth, desiredHeight
+  );
+
+  // Apply color transformation based on colorParam
+  if (dimensionInfo.colorParam === 'grayscale') {
+    applyGrayscale(ctx, desiredWidth, desiredHeight);
+  }
 
   // Store the manipulated canvas in the array
   manipulatedCanvases.push(resizedCanvas);
@@ -165,6 +201,8 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
       maintainAspect: aspectParam === 'true',
       width: parseInt(widthParam),
       height: parseInt(heightParam),
+      colorParam,
+      imageFormatParam
     }
 
     // An array to store manipulated canvases

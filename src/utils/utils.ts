@@ -3,9 +3,13 @@ import Jimp = require("jimp");
 import cron from 'node-cron'
 import path from 'path';
 import { PathLike } from 'fs';
+import { promisify } from 'util';
+import { pipeline } from 'stream';
+const webpConv = require('webp-converter');
 
-import { createWriteStream } from 'fs';
+import { createReadStream, createWriteStream } from 'fs';
 import { Canvas } from "canvas";
+import sharp = require("sharp");
 
 // filterImageFromURL
 // helper function to download, filter, and save the filtered image locally
@@ -72,6 +76,8 @@ export function deleteFile(filename: string) {
     });
   }
 
+const pipelineAsync = promisify(pipeline);
+
 
 export async function saveCanvasToImage(canvas: any, filePath: string, quality: number, imageFormatParam: string) {
 
@@ -85,7 +91,22 @@ export async function saveCanvasToImage(canvas: any, filePath: string, quality: 
 
       // Check if the directory exists, and create it if it doesn't
       await fs.promises.mkdir(directoryPath, { recursive: true });
+      if (imageFormatParam === 'webp') {
 
+        const buffer = await canvas.toBuffer('image/jpeg', { quality }); // Assuming the canvas is in JPEG format
+  
+        // Convert the buffer to WebP using sharp
+        const webpBuffer = await sharp(buffer).toFormat('webp', { quality: quality === 100 ? 54: quality  }).toBuffer();
+  
+        // Write WebP buffer to the final file
+        await fs.promises.writeFile(fullPath, webpBuffer);
+  
+        return {
+          size: webpBuffer.length,
+          compressedFile: fullPath
+        };
+      }
+      
       const buffer = await canvas.toBuffer(`image/${imageFormatParam}`, {quality});
       
       const uint8Array = new Uint8Array(buffer);
