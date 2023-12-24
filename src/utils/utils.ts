@@ -97,6 +97,10 @@ export async function saveCanvasToImage(canvas: any, filePath: string, quality: 
         // Write WebP buffer to the final file
         await fs.promises.writeFile(fullPath, webpBuffer);
   
+        setTimeout(() => {
+          deleteFile(filePath);
+        }, 4 * 60 * 1000);
+
         return {
           size: webpBuffer.length,
           compressedFile: fullPath
@@ -110,8 +114,6 @@ export async function saveCanvasToImage(canvas: any, filePath: string, quality: 
       // Write to file first
       await fs.promises.writeFile(fullPath, uint8Array);
     
-      // Then get a read stream
-      const readStream = fs.createReadStream(fullPath);
     
       const stats = fs.statSync(fullPath);
       const size = stats.size;
