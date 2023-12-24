@@ -8,6 +8,7 @@ import Jimp from 'jimp';
 import path from 'path';
 
 import { createCanvas, loadImage } from 'canvas';
+
 import fetch from 'node-fetch';
 
 // const isImageURL = require('image-url-validator').default;
@@ -19,7 +20,7 @@ const projectRoot = process.cwd();
 
 const upload = multer({ dest: `${projectRoot}/uploads/` });
 
-  router.post('/', upload.array('files'), async (req:any, res:any) => {
+router.post('/', upload.array('files'), async (req:any, res:any) => {
 
     try {
 
@@ -46,11 +47,11 @@ const upload = multer({ dest: `${projectRoot}/uploads/` });
         
       }
 
-    // All images are compressed, return a success response with the compressed file paths
-    res.status(200).json({oldFiles: req.files, files: compressedFiles });
+      // All images are compressed, return a success response with the compressed file paths
+      res.status(200).json({oldFiles: req.files, files: compressedFiles });
 
-     // 4. deletes any files on the server on finish of the response      
-    //  setTimeout(()=>deleteLocalFiles(compressedFiles), 2000) 
+      // 4. deletes any files on the server on finish of the response      
+      //  setTimeout(()=>deleteLocalFiles(compressedFiles), 2000) 
 
     } catch (error:any) {
 
@@ -61,6 +62,7 @@ const upload = multer({ dest: `${projectRoot}/uploads/` });
 
     }
 });
+
 
 type DimensionInfoProp = {
   maintainAspect: boolean,
@@ -116,7 +118,6 @@ async function processUploadedFiles(
 
   // Set the desired width for resizing (e.g., 800 pixels)
   // const desiredWidth = dimensionInfo.width;
-  console.log("dimensionInfo.width", dimensionInfo);
   // Calculate the corresponding height to maintain aspect ratio
   // const desiredHeight = Math.round(desiredWidth / aspectRatio);
 
