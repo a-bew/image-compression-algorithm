@@ -1,0 +1,14 @@
+# render.yaml
+
+services:
+  - name: web
+    buildCommand: |
+      rm -rf node_modules
+      rm package-lock.json
+      npm install
+      npm run build
+    startCommand: npm start
+    env:
+      - key: NODE_ENV
+        value: production
+    buildNodeVersion: 20.9.0
