@@ -75,9 +75,6 @@ export function deleteFile(filename: string) {
     });
   }
 
-const pipelineAsync = promisify(pipeline);
-
-
 export async function saveCanvasToImage(canvas: any, filePath: string, quality: number, imageFormatParam: string) {
 
     const fullPath = path.join(__dirname, filePath);
@@ -90,9 +87,6 @@ export async function saveCanvasToImage(canvas: any, filePath: string, quality: 
 
       // Check if the directory exists, and create it if it doesn't
       await fs.promises.mkdir(directoryPath, { recursive: true });
-      
-      //:TODO:
-
       // if (imageFormatParam === 'webp') {
 
       //   const buffer = await canvas.toBuffer('image/jpeg', { quality }); // Assuming the canvas is in JPEG format
