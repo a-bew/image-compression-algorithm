@@ -4,8 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "clean": "rm -rf node_modules dist",
-    "build": "npm run clean && tsc",
+    "build": "tsc",
     "start": "NODE_ENV=production node dist/index.js", 
     "dev": "NODE_ENV=development nodemon --exec ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1" 
