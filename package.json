@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "clean": "rm -rf node_modules dist package-lock.json",
+    "clean": "rm -rf node_modules dist",
     "build": "npm run clean && tsc",
     "start": "NODE_ENV=production node dist/index.js", 
     "dev": "NODE_ENV=development nodemon --exec ts-node src/index.ts",
