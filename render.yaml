@@ -3,6 +3,7 @@
 services:
   - type: web
     name: imcomp
+    runtime: node
     buildCommand: |
       rm -rf node_modules
       rm package-lock.json
