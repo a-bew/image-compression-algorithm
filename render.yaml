@@ -1,14 +1,15 @@
 # render.yaml
 
 services:
-  - name: web
+  - type: web
+    name: imcomp
     buildCommand: |
       rm -rf node_modules
       rm package-lock.json
       npm install
       npm run build
     startCommand: npm start
-    env:
+    envVars:
       - key: NODE_ENV
         value: production
     buildNodeVersion: 20.9.0
