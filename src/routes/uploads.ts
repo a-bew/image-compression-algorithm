@@ -87,97 +87,123 @@ function applyGrayscale(ctx: CanvasRenderingContext2D, width: number, height: nu
   ctx.putImageData(imageData, 0, 0);
 }
 
+type CallbackFunction = (resultCanvases: HTMLCanvasElement[], error?: any) => void;
+
 // Recursive function to process uploaded files
 async function processUploadedFiles(
   files: Express.Multer.File[],
   currentIndex: number,
   dimensionInfo: DimensionInfoProp,
   manipulatedCanvases: HTMLCanvasElement[], // Pass the array as an argument
-  callback: (resultCanvas: HTMLCanvasElement[]) => void
+  callback: CallbackFunction
 ) {
 
   try {
     
-  if (currentIndex >= files.length) {
-    // All files processed, invoke the callback
-    callback(manipulatedCanvases); // Pass the manipulatedCanvases array
-    return;
-  }
+    if (currentIndex >= files.length) {
+      // All files processed, invoke the callback
+      callback(manipulatedCanvases); // Pass the manipulatedCanvases array
+      return;
+    }
 
-  const file = files[currentIndex];
+    const file = files[currentIndex];
 
-  // Load the uploaded file
-  const image = await loadImage(file.path);
-  const originalHeight = image.height;
-  const originalWidth = image.width;
-  let desiredWidth = dimensionInfo.width || originalWidth; 
-  let desiredHeight = dimensionInfo.height || originalHeight;
+    try {
+      // Load the uploaded file
+    // Load the uploaded file
+    const image = await loadImage(file.path);
+    const originalHeight = image.height;
+    const originalWidth = image.width;
+    let desiredWidth = dimensionInfo.width || originalWidth; 
+    let desiredHeight = dimensionInfo.height || originalHeight;
 
-  // Calculate the aspect ratio of the image
-  // const aspectRatio = image.width / image.height;
+    
 
-  // Set the desired width for resizing (e.g., 800 pixels)
-  // const desiredWidth = dimensionInfo.width;
-  // Calculate the corresponding height to maintain aspect ratio
-  // const desiredHeight = Math.round(desiredWidth / aspectRatio);
+    if (dimensionInfo.maintainAspect && desiredWidth > 0) {
+      const aspectRatio =  desiredWidth / originalWidth;
+      desiredHeight = Math.round(originalHeight * aspectRatio); 
+    }
 
-  if (dimensionInfo.maintainAspect && desiredWidth > 0) {
-    const aspectRatio =  desiredWidth / originalWidth;
-    // const aspectRatio = (originalHeight*desiredWidth)/originalWidth; //(oldHeight * newWidth) / oldWidth
-    desiredHeight = Math.round(originalHeight * aspectRatio); 
-  }
+    // Create a canvas with the desired dimensions
+    const resizedCanvas:any = createCanvas(desiredWidth, desiredHeight);
 
-  // Create a canvas with the desired dimensions
-  const resizedCanvas:any = createCanvas(desiredWidth, desiredHeight);
-
-  const ctx = resizedCanvas.getContext('2d');
-// Set high-quality image rendering for better sharpness
-    // ctx.imageSmoothingEnabled = true;
-    // ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(
-      image, 
-      0, 0, originalWidth, originalHeight,
-      // 0, 0, desiredWidth, desiredHeight
-  );
+    const ctx = resizedCanvas.getContext('2d');
+  // Set high-quality image rendering for better sharpness
+      // ctx.imageSmoothingEnabled = true;
+      // ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(
+        image, 
+        0, 0, originalWidth, originalHeight,
+        // 0, 0, desiredWidth, desiredHeight
+    );
 
     // Sharpen image
     // ctx.filter = 'sharpen(1.5)';
     // Set the blur effect
     ctx.filter = 'blur(10px)'; // Adjust the blur radius as needed
-  // Draw the image onto the resized canvas to resize it
-  // ctx.drawImage(image, 0, 0, desiredWidth, desiredHeight);
-  ctx.drawImage(
-      image, 
-      0, 0, originalWidth, originalHeight,
-      0, 0, desiredWidth, desiredHeight
-  );
+    // Draw the image onto the resized canvas to resize it
+    // ctx.drawImage(image, 0, 0, desiredWidth, desiredHeight);
+    ctx.drawImage(
+        image, 
+        0, 0, originalWidth, originalHeight,
+        0, 0, desiredWidth, desiredHeight
+    );
 
-  // Apply color transformation based on colorParam
-  if (dimensionInfo.colorParam === 'grayscale') {
-    applyGrayscale(ctx, desiredWidth, desiredHeight);
-  }
-
-  // Store the manipulated canvas in the array
-  manipulatedCanvases.push(resizedCanvas);
-
-  // Delete the file
-  fs.unlink(file.path, err => {
-    if (err) {
-      console.error(err);
+    // Apply color transformation based on colorParam
+    if (dimensionInfo.colorParam === 'grayscale') {
+      applyGrayscale(ctx, desiredWidth, desiredHeight);
     }
-  });
-  
-  // Continue processing the next file
-  processUploadedFiles(files, currentIndex + 1, dimensionInfo, manipulatedCanvases, callback);
+
+    // Store the manipulated canvas in the array
+    manipulatedCanvases.push(resizedCanvas);
+
+    // Delete the file
+    fs.unlink(file.path, err => {
+      if (err) {
+        console.error(err);
+      }
+    });
+
+    processUploadedFiles(files, currentIndex + 1, dimensionInfo, manipulatedCanvases, callback);
+
+  } catch (loadImageError) {
+    console.error('Error loading image:', loadImageError);
+
+      // Handle the error or log it as needed
+      // For example, you can skip the current file and continue processing the next one
+      console.error(`Skipping file: ${file.originalname} due to unsupported image type.`);
+
+      // Continue processing the next file
+      // processUploadedFiles(files, currentIndex + 1, dimensionInfo, manipulatedCanvases, callback);
+      callback([], loadImageError); 
+  }
+    // Continue processing the next file
 
 } catch (error) {
   console.error('Error processing uploaded files:', error);
   // Handle the error or rethrow it if you want the route handler to catch it
-  throw error;    
+  // throw error;   
+   // Invoke the callback with the error
+   callback([], error); 
 }
 
 }
 
+class YourSpecificError extends Error {
+  constructor() {
+    super('Error manipulating images');
+    this.name = 'YourSpecificError';
+  }
+}
+
+const unlinkFile = async (filePath: string) => {
+  try {
+    await fs.promises.unlink(filePath);
+    console.log(`File deleted: ${filePath}`);
+  } catch (error) {
+    console.error(`Error deleting file ${filePath}:`, error);
+  }
+};
 const upload1 = multer({ dest: `${projectRoot}/uploads/manipulate-images` });
 
 router.post('/manipulate-images', upload1.array('files'), async (req:any, res:any) => {
@@ -205,14 +231,18 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
       colorParam,
       imageFormatParam
     }
-
-    // An array to store manipulated canvases
-    const manipulatedCanvases: HTMLCanvasElement[] = [];
     
-    // Process all uploaded files using a loop
-    processUploadedFiles(uploadedFiles, 0, dimensionInfo, manipulatedCanvases, async (manipulatedCanvases) => {
+    const manipulatedCanvases = await new Promise<HTMLCanvasElement[]>((resolve, reject) => {
 
-      try {
+      processUploadedFiles(uploadedFiles, 0, dimensionInfo, [], (resultCanvases, error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(resultCanvases);
+        }
+      });
+    });
+
 
         const savedImages = await Promise.all(
           manipulatedCanvases.map((canvas, i) => {
@@ -226,25 +256,27 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
           })
         );
     
-        res.status(200).json({files: savedImages });
+        res.status(200).json({success: true, files: savedImages });
 
-      } catch (error:any) {
-
-        console.log(error);
-
-        res.status(400).send('Error manipulating images');
-      }
-
-    })
 
 
   } catch (error:any) {
     
     console.error('Error in route handling logic:', error);
     // If there's an error, delete all uploaded files and return an error response
-    req.files.forEach((file:any) => fs.unlinkSync(file.path));
+    // req.files.forEach((file:any) => fs.unlinkSync(file.path));
+    req.files.forEach(async (file: any) => {
+      await unlinkFile(file.path);
+    });
 
-    res.status(500).json({ error: 'Internal Server Error' });
+    // res.status(500).json({ error: 'Internal Server Error' });
+
+    // Customize the error response based on the type of error
+    if (error instanceof YourSpecificError) {
+      res.status(400).json({ error: 'Error manipulating images' });
+    } else {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
 
   }
 
