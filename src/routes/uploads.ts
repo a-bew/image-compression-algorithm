@@ -70,6 +70,128 @@ type DimensionInfoProp = {
   height: number,
   colorParam: string;
   imageFormatParam: string;
+  blurImage: number;
+  completeBlur: boolean;
+}
+
+// function applySpotlightEffect(ctx: CanvasRenderingContext2D, width: number, height: number, blurRadius: number) {
+//   // Create a temporary canvas to hold the blurred image
+//   // const tempCanvas = document.createElement('canvas');
+//   const tempCanvas:any = createCanvas(width, height);
+
+//   const tempCtx = tempCanvas.getContext('2d');
+//   if (!tempCtx) return;
+
+//   tempCanvas.width = width;
+//   tempCanvas.height = height;
+
+//   // Draw the original image onto the temporary canvas
+//   tempCtx.drawImage(ctx.canvas, 0, 0);
+
+//   // Apply blur effect to the temporary canvas
+//   applyBlur(tempCtx, width, height, blurRadius);
+
+//   // Clear the original canvas
+//   ctx.clearRect(0, 0, width, height);
+
+//   // Draw the blurred image onto the original canvas with a composite operation
+//   ctx.globalCompositeOperation = 'lighter'; // Additive blending mode for glow effect
+//   ctx.drawImage(tempCanvas, 0, 0);
+// }
+
+function completeBlur(ctx: CanvasRenderingContext2D, width: number, height: number, blurRadius: number) {
+  const imageData = ctx.getImageData(0, 0, width, height);
+
+  const pixels = imageData.data;
+
+  // Set all channels (r,g,b,a) to the average color
+  const avgColor = getAvgColor(imageData); 
+
+  for(let i = 0; i < pixels.length; i += 4) {
+    pixels[i] = avgColor.r;
+    pixels[i + 1] = avgColor.g; 
+    pixels[i + 2] = avgColor.b;
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+}
+
+function getAvgColor(imageData: ImageData) {
+
+  let redSum = 0;
+  let greenSum = 0;
+  let blueSum = 0;
+
+  const totalPixels = imageData.width * imageData.height;
+  const data = imageData.data;
+
+  for(let i = 0; i < data.length; i += 4) {
+    redSum += data[i];
+    greenSum += data[i+1];
+    blueSum += data[i+2];
+  }
+
+  const avgRed = Math.floor(redSum / totalPixels);
+  const avgGreen = Math.floor(greenSum / totalPixels);  
+  const avgBlue = Math.floor(blueSum / totalPixels);
+
+  return {
+    r: avgRed,
+    g: avgGreen,
+    b: avgBlue
+  }; 
+}
+
+function applyBlur(ctx: CanvasRenderingContext2D, width: number, height: number, blurRadius: number) {
+  // const imageData = ctx.getImageData(0, 0, width, height);
+  // const pixels = imageData.data;
+
+  // // Apply blur to each pixel
+  // for (let i = 0; i < pixels.length; i += 4) {
+  //   const avgR = getAverage(pixels, i, blurRadius, width, 'r');
+  //   const avgG = getAverage(pixels, i, blurRadius, width, 'g');
+  //   const avgB = getAverage(pixels, i, blurRadius, width, 'b');
+
+  //   pixels[i] = avgR;
+  //   pixels[i + 1] = avgG;
+  //   pixels[i + 2] = avgB;
+  // }
+
+  // // Put the blurred image data back onto the canvas
+  // ctx.putImageData(imageData, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, width, height);
+      const pixels = imageData.data;
+
+      for(let y = 0; y < height; y++) {
+        for(let x = 0; x < width; x++) {
+          
+          let red = 0, green = 0, blue = 0, alpha = 0;
+
+          // box blur
+          for(let n = -blurRadius; n <= blurRadius; n++) {
+            for(let m = -blurRadius; m <= blurRadius; m++) {
+              const pixelPos = (y + n) * (width * 4) + (x + m) * 4;
+              red += pixels[pixelPos];
+              green += pixels[pixelPos + 1];
+              blue += pixels[pixelPos + 2];  
+            }
+          }
+
+          red = red / ((blurRadius * 2 + 1) * (blurRadius * 2 + 1));
+          green = green / ((blurRadius * 2 + 1) * (blurRadius * 2 + 1));
+          blue = blue / ((blurRadius * 2 + 1) * (blurRadius * 2 + 1));
+
+          const idx = (y * width + x) * 4;
+
+          pixels[idx] = red;
+          pixels[idx + 1] = green; 
+          pixels[idx + 2] = blue;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
 }
 
 // Reusable function for converting image data to grayscale
@@ -85,6 +207,57 @@ function applyGrayscale(ctx: CanvasRenderingContext2D, width: number, height: nu
   }
 
   ctx.putImageData(imageData, 0, 0);
+}
+
+
+function blurImage(ctx:CanvasRenderingContext2D, width: number, height: number, radius: number) {
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const pixels = imageData.data;
+
+  // Apply blur to each pixel
+  for (let i = 0; i < pixels.length; i += 4) {
+    const avgR = getAverage(pixels, i, radius, width, 'r');
+    const avgG = getAverage(pixels, i, radius, width, 'g');
+    const avgB = getAverage(pixels, i, radius, width, 'b');
+
+    pixels[i] = avgR;
+    pixels[i + 1] = avgG;
+    pixels[i + 2] = avgB;
+  }
+
+  // Put the blurred image data back onto the canvas
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function getAverage(
+    // pixels, i, radius, width, color
+    pixels: Uint8ClampedArray,
+    i: number,
+    radius: number,
+    width: number,
+    color: 'r' | 'g' | 'b'
+  ) {
+  let sum = 0;
+  let count = 0;
+
+  for (let x = -radius; x <= radius; x++) {
+    for (let y = -radius; y <= radius; y++) {
+      const pixelIndex = (i + y * width * 4 + x * 4);
+      const pixelColor = pixels[pixelIndex];
+      
+      if (color === 'r') {
+        sum += pixelColor;
+      } else if (color === 'g') {
+        sum += pixelColor;
+      } else if (color === 'b') {
+        sum += pixelColor;
+      }
+
+      count++;
+    }
+  }
+
+  return sum / count;
 }
 
 type CallbackFunction = (resultCanvases: HTMLCanvasElement[], error?: any) => void;
@@ -154,6 +327,14 @@ async function processUploadedFiles(
       applyGrayscale(ctx, desiredWidth, desiredHeight);
     }
 
+    console.log("dimensionInfo", dimensionInfo, dimensionInfo.blurImage);
+     
+      if (dimensionInfo.completeBlur){
+        completeBlur(ctx, desiredWidth, desiredHeight, dimensionInfo.blurImage)
+      } else {
+        dimensionInfo.blurImage > 0 && dimensionInfo.blurImage < 10 && applyBlur(ctx, desiredWidth, desiredHeight, dimensionInfo.blurImage)
+      }
+
     // Store the manipulated canvas in the array
     manipulatedCanvases.push(resizedCanvas);
 
@@ -219,6 +400,8 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
     const widthParam = req.query.width as string;
     const heightParam = req.query.height as string;
     const colorParam = req.query.color as string;
+    const blurImage = req.query.blurRatio as number;
+    const completeBlur = JSON.parse(req.query.completeBlur);
 
     const quality = qualityParam ? parseInt(qualityParam, 10) : 90;
 
@@ -229,7 +412,9 @@ router.post('/manipulate-images', upload1.array('files'), async (req:any, res:an
       width: parseInt(widthParam),
       height: parseInt(heightParam),
       colorParam,
-      imageFormatParam
+      imageFormatParam,
+      blurImage,
+      completeBlur
     }
     
     const manipulatedCanvases = await new Promise<HTMLCanvasElement[]>((resolve, reject) => {
